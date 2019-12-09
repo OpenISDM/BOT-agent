@@ -1,27 +1,22 @@
 import serial
 import socket
 import time
-FROM_GATEWAY 	= 0
-FIRE_ALARM 		= 1
-API_VERSION 	= 2
-MODE 			= 3
-DURATION 		= 4
-
-serialPortName = '/dev/ttyUSB0'
-UDPPort = 20001
-
+FROM_GATEWAY    = 0
+FIRE_ALARM      = 1
+API_VERSION     = 2
+MODE            = 3
+DURATION        = 4
 def get_host_ip():
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.connect(('8.8.8.8', 80))
-        ip = s.getsockname()[0]
-    finally:
-        s.close()
-
-    return ip
+	try:
+		s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		s.connect(('8.8.8.8',80))
+		ip = s.getsockname()[0]
+	finally:
+		s.close()
+	return ip
 def alert_operation(mode, duration):
 	if(mode == 1):
-		conn.write('RS')
+		conn.write('RO')
 		time.sleep(duration)
 		conn.write('FQ')
 	elif(mode == 2):
@@ -29,23 +24,24 @@ def alert_operation(mode, duration):
 		time.sleep(duration)
 		conn.write('FQ')
 	elif(mode == 3):
-		conn.write('RS1P')
+		conn.write('RO1P')
 		time.sleep(duration)
 		conn.write('FQ')
 	else: 
 		print('unrecognized mode')
 
 # setup serial port
-IP = get_host_ip()
-
-conn = serial.Serial(serialPortName, timeout=.2)
+conn = serial.Serial('/dev/ttyUSB0',timeout=.2)
 time.sleep(3)
+conn.write('FQ')
+
 # setup UDP client port
-serverAddressPort   = (IP, UDPPort)
+IP = get_host_ip()
+serverAddressPort   = (IP, 20001)
 bufferSize  = 1024
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 sock.bind(serverAddressPort)
-print('Start UDP Server Listening at port: {}'.format(serverAddressPort[0]))
+print('Start UDP Server Listening at port: {}'.format(IP))
 
 while True:
 	bytesAddressPair = sock.recvfrom(bufferSize)
@@ -67,3 +63,4 @@ while True:
 		mode = int(splitted_message[MODE])
 		duration = int(splitted_message[DURATION])
 		alert_operation(mode, duration)
+	# time.sleep(0.3)
